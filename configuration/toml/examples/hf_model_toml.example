@@ -1,0 +1,18 @@
+[model]
+model_name = "stella_en_400M_v5"
+pretrained_model = "dunzhang/stella_en_400M_v5"
+embedding_dims = 8192
+max_tokens = 8192
+mem_usage = 1.62
+model_size = 435
+device = "cuda"
+identical_threshold = 0.9
+
+[api]
+api_base = "https://api-inference.huggingface.co/models"
+api_token = "hf_abcxyz"
+trust_remote_code = true
+
+[retry]
+max_retries = 5
+backoff_factor = 2

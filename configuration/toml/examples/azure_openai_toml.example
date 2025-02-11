@@ -1,0 +1,27 @@
+[llm_api]
+api_key = "1234567890qwertyuiop"
+api_base = "https://ai-abcxyz.openai.azure.com/"
+api_version = "2023-03-15-preview"
+deployment_name = "gpt-35-turbo"
+
+[model]
+model_id = "gpt-35-turbo"
+temperature = 0.2
+max_tokens = 2048
+
+[cost]
+prompt_token_cost = 0.03
+response_token_cost = 0.06
+
+[retry]
+max_retries = 5
+backoff_factor = 2
+
+[cache]
+enabled = true
+cache_expiry = 3600
+
+[security]
+encrypted = true
+trust_strategy = "TRUST_ALL_CERTIFICATES"
+

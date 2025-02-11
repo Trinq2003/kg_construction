@@ -1,0 +1,14 @@
+PARALLEL_CONFIG:
+  NUMBER_OF_WORKERS: 10
+KNOWLEDGE_GRAPH_CONFIG:
+  DEFAULT_ENTITY_TYPES:
+    heading: '__Heading__'
+    content: '__Content__'
+    entity: '__Entity__'
+    document: '__Document__'
+  DEFAULT_RELATION_TYPES:
+    is_subheading: '__IS_SUBHEADING__'
+    next_content: '__IS_NEXT_CONTENT__'
+    next_heading: '__IS_NEXT_HEADING__'
+    has_content: '__HAS_CONTENT__'
+    mentioned_in: '__MENTIONED_IN__'

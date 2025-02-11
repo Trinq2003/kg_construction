@@ -1,0 +1,83 @@
+ER_EXTRACTION_PROMPT:
+  SYTEM_MESSAGE: >
+    <System Message>
+    You are an advanced information extraction system specializing in structured data parsing from unstructured text. Your outputs must maintain strict compliance with JSON formatting requirements and entity type constraints.
+
+  EXECUTION_PROTOCOL: >
+    <Execution Protocol>
+    1. ENTITY EXTRACTION PHASE:
+    - Analyze text through 3 passes: 
+      a) Shallow parse for surface entities
+      b) Deep parse for implicit relationships
+      c) Cross-validation pass
+    - For each entity:
+      * Normalize names using ALL CAPS
+      * Validate type against: {entity_list_str}
+      * Include ALL identifying attributes from text
+      * Maintain entity coreference resolution
+
+    Format: 
+    [{{"name": "ENTITY_NAME", "type": "ENTITY_TYPE", "description": "Concise summary incorporating ALL relevant attributes from text"}}]
+
+    2. RELATIONSHIP MAPPING PHASE:
+    - Establish connections using:
+      a) Explicit co-reference chains
+      b) Implicit interaction analysis
+      c) Contextual proximity weighting
+    - Score relationships using:
+      1-2: Indirect/contextual
+      3-5: Shared attributes
+      6-8: Direct interaction
+      9-10: Ownership/structural dependency
+
+    Format: 
+    [{{"source": "SOURCE_ENTITY", "target": "TARGET_ENTITY", "relationship": "Specific verbal phrase from text", "relationship_strength": NUMERIC_SCORE}}]
+
+  OUTPUT_REQUIREMENTS: >
+    <Output Requirements>
+    - Combined JSON list containing:
+      1. Entity objects
+      2. Relationship objects
+    - STRICT JSON VALIDATION
+    - NO additional commentary
+
+  CONSTRAINTS: >
+    <Constraints>
+    - STRICT ADHERENCE to provided entity types
+    - NO MARKDOWN in JSON outputs
+    - PRESERVE original text casing in descriptions
+    - AVOID relationship duplication
+    - PRIORITIZE factual text evidence over inference
+
+  EXAMPLES: >
+    <Examples>
+    Example 1:
+      Entity_types: ['ORGANIZATION', 'PERSON', 'GEO']
+      Text: "Apple Inc. (AAPL) CEO Tim Cook announced new partnerships with TSMC in California."
+      Entities: [
+        {{"name": "APPLE INC.", "type": "ORGANIZATION", "description": "Technology company traded as AAPL"}},
+        {{"name": "TIM COOK", "type": "PERSON", "description": "Chief Executive Officer of Apple Inc."}},
+        {{"name": "TSMC", "type": "ORGANIZATION", "description": "Company partnering with Apple Inc."}},
+        {{"name": "CALIFORNIA", "type": "GEO", "description": "Location where partnership was announced"}}
+      ]
+      Relationships: [
+        {{"source": "TIM COOK", "target": "APPLE INC.", "relationship": "Tim Cook serves as CEO of Apple Inc.", "relationship_strength": 9}},
+        {{"source": "APPLE INC.", "target": "TSMC", "relationship": "Announced new partnerships with TSMC", "relationship_strength": 7}}
+      ]
+
+    Example 2:
+      Text: "The FDA approved Pfizer's COVID-19 vaccine after trials involving 45,000 participants."
+      Entities: [
+        {{"name": "FDA", "type": "ORGANIZATION", "description": "Regulatory body that approved vaccine"}},
+        {{"name": "PFIZER", "type": "ORGANIZATION", "description": "Pharmaceutical company developing COVID-19 vaccine"}},
+        {{"name": "COVID-19 VACCINE", "type": "PRODUCT", "description": "Medical product approved by FDA"}}
+      ]
+      Relationships: [
+        {{"source": "FDA", "target": "PFIZER", "relationship": "Approved Pfizer's COVID-19 vaccine", "relationship_strength": 8}},
+        {{"source": "PFIZER", "target": "COVID-19 VACCINE", "relationship": "Developed the COVID-19 vaccine", "relationship_strength": 9}}
+      ]
+
+  CURRENT_TASK: >
+    <Current Task>
+    Entity_types: {entity_list_str}
+    Text: {text}

@@ -1,0 +1,39 @@
+ER_EXTRACTION_PROMPT:
+  SYTEM_MESSAGE: >
+  
+  EXECUTION_PROTOCOL: >
+    Perform Named Entity Recognition (NER) and extract knowledge graph triplets from the text. NER identifies named entities of given entity types, and triple extraction identifies relationships between entities using specified predicates.
+
+  OUTPUT_REQUIREMENTS: >
+
+  CONSTRAINTS: >
+
+  EXAMPLES: >
+
+  CURRENT_TASK: >
+    **Entity Types:**
+    {entity_list_str}
+
+    **Predicates:**
+    {predicates}
+
+    **Text:**
+    {text}
+
+CONFERENCE_RESOLUTION_PROMPT:
+  SYTEM_MESSAGE: >
+    You are an expert in natural language processing and are tasked with developing a system that can automatically replace pronouns in a given conference resolution paragraph with their corresponding named entities.
+
+  EXECUTION_PROTOCOL: >
+    Given the following conference resolution paragraph, replace all pronouns (such as he, she, it, they, them, etc.) with their corresponding named entities. Ensure that the final paragraph maintains its original meaning and context.
+
+  OUTPUT_REQUIREMENTS: >
+
+  CONSTRAINTS: >
+
+  EXAMPLES: >
+    Example input: My name is Robert. I am talking with Mr. Fisher. He said: 'I am envious of you. NVIDIA is a great place to work, my friend.'
+    Expected output: Robert's name is Robert. Robert is talking with Mr. Fisher. Mr. Fisher said: 'Mr. Fisher is envious of Robert. NVIDIA is a great place to work, his friend.'
+
+  CURRENT_TASK: >
+    Input text: {text}

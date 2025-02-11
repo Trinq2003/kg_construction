@@ -1,9 +1,8 @@
 from datetime import datetime
-from py2neo import Relationship
 from knowledge_graph.modules.node import *
 from typing import Any, Dict, Type, get_origin, get_args, List, Tuple, Set, Union
 
-class GraphRelationship(Relationship):
+class GraphRelationship:
     def __init__(self, start_node: GraphNode, end_node: GraphNode, rel_type, defaults=None, **properties):
         defaults = defaults or {}
         combined_properties = self._apply_defaults_and_validate(defaults, properties)
@@ -18,7 +17,7 @@ class GraphRelationship(Relationship):
         for key, expected_type in defaults.items():
             if key not in properties:
                 raise ValueError(f"Missing required property: '{key}'")
-            if not GraphNode._is_instance_of_type(properties[key], expected_type):
+            if not GraphRelationship._is_instance_of_type(properties[key], expected_type):
                 raise TypeError(f"Property '{key}' must be of type {expected_type}")
         return {**properties}
 
@@ -34,7 +33,7 @@ class GraphRelationship(Relationship):
             if not isinstance(value, list):
                 return False
             if args:
-                return all(GraphNode._is_instance_of_type(item, args[0]) for item in value)
+                return all(GraphRelationship._is_instance_of_type(item, args[0]) for item in value)
             return True
         if origin in {dict, Dict}:
             if not isinstance(value, dict):
@@ -42,7 +41,7 @@ class GraphRelationship(Relationship):
             if args and len(args) == 2:
                 key_type, value_type = args
                 return all(
-                    GraphNode._is_instance_of_type(k, key_type) and GraphNode._is_instance_of_type(v, value_type)
+                    GraphRelationship._is_instance_of_type(k, key_type) and GraphRelationship._is_instance_of_type(v, value_type)
                     for k, v in value.items()
                 )
             return True
@@ -50,18 +49,18 @@ class GraphRelationship(Relationship):
             if not isinstance(value, tuple):
                 return False
             if len(args) == len(value):
-                return all(GraphNode._is_instance_of_type(v, t) for v, t in zip(value, args))
+                return all(GraphRelationship._is_instance_of_type(v, t) for v, t in zip(value, args))
             if len(args) == 2 and args[1] is Ellipsis:
-                return all(GraphNode._is_instance_of_type(v, args[0]) for v in value)
+                return all(GraphRelationship._is_instance_of_type(v, args[0]) for v in value)
             return False
         if origin in {set, Set}:
             if not isinstance(value, set):
                 return False
             if args:
-                return all(GraphNode._is_instance_of_type(item, args[0]) for item in value)
+                return all(GraphRelationship._is_instance_of_type(item, args[0]) for item in value)
             return True
         if origin is Union:
-            return any(GraphNode._is_instance_of_type(value, arg) for arg in args)
+            return any(GraphRelationship._is_instance_of_type(value, arg) for arg in args)
         if origin is None:
             return isinstance(value, expected_type)
 

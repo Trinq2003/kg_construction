@@ -8,31 +8,33 @@ from knowledge_graph.modules.node import ContentNode
 from exception.entity_exception import EntityTypeListIsEmptyError
 from configuration.configurations import ERExtractorConfiguration
 from base_classes.llm import AbstractLanguageModel
-from base_classes.extractor import Extractor
 from base_classes.embedding_model import AbstractEmbeddingModel
 from nlp.paragraph_processor import ParagraphProcessor
 
-class ERExtractor(Extractor):
+class ERExtractor:
     _entity_types: List[str] = Optional[List[str]]
     emb_model: AbstractEmbeddingModel = None
-    def __init__(self, extraction_llm: AbstractLanguageModel, config: ERExtractorConfiguration, paragraph_nlp_processor: ParagraphProcessor) -> None:
+    extraction_llm_model: AbstractLanguageModel = None
+    conference_resolution_llm_model: AbstractLanguageModel = None
+    paragraph_nlp_processor: ParagraphProcessor = None
+    def __init__(self, config: ERExtractorConfiguration) -> None:
         """
         Initialize the entity extractor with an LLM and configuration.
 
         :param llm: The language model used for entity extraction.
         :param config: The configuration object for the entity extractor.
         """
-        super().__init__(llm=extraction_llm, config=config, paragraph_nlp_processor=paragraph_nlp_processor)
+        self._config: ERExtractorConfiguration = config
 
     def _load_paragraph(self, paragraph: str) -> None:
         """
-        Load a paragraph for entity extraction.
+        Load a paragraph and perform NLP processing.
 
         :param paragraph: The paragraph to load.
         """
-        self._paragraph_nlp_processor.load_paragraph(paragraph)
-        self._entity_types = self._paragraph_nlp_processor.get_entity_type()
-        self._predicates = self._paragraph_nlp_processor.get_predicate()
+        self.paragraph_nlp_processor.load_paragraph(paragraph)
+        self._entity_types = self.paragraph_nlp_processor.get_entity_type()
+        self._predicates = self.paragraph_nlp_processor.get_predicate()
 
     def load_embedding_model(self, emb_model: AbstractEmbeddingModel) -> None:
         """
@@ -42,14 +44,38 @@ class ERExtractor(Extractor):
         """
         self.emb_model = emb_model
         
-    def load_yaml_prompt(self):
+    def load_extraction_llm_model(self, extraction_llm_model: AbstractLanguageModel) -> None:
+        """
+        Load an LLM model for entity extraction.
+
+        :param extraction_llm_model: The LLM model to load.
+        """
+        self.extraction_llm_model = extraction_llm_model
+        
+    def load_conference_resolution_llm_model(self, conference_resolution_llm_model: AbstractLanguageModel) -> None:
+        """
+        Load an LLM model for conference resolution.
+
+        :param conference_resolution_llm_model: The LLM model to load.
+        """
+        self.conference_resolution_llm_model = conference_resolution_llm_model
+        
+    def load_nlp_processor(self, paragraph_nlp_processor: ParagraphProcessor) -> None:
+        """
+        Load a processor for natural language processing.
+
+        :param paragraph_nlp_processor: The NLP paragraph processor to load.
+        """
+        self.paragraph_nlp_processor = paragraph_nlp_processor
+        
+    def load_prompt(self):
         """
         Load and parse the YAML prompt template.
         """
-        with open(self._config.yaml_prompt_path, 'r', encoding='utf-8') as file:
-            self.prompt_data = yaml.safe_load(file)
+        with open(self._config.prompt_path, 'r', encoding='utf-8') as file:
+            self._prompt_data = yaml.safe_load(file)
 
-    def _extraction_llm_message(self, text: str, few_shot: bool = True) -> List[Dict[str, str]]:
+    def _extraction_llm_message(self, text: str, few_shot: bool = False) -> List[Dict[str, str]]:
         """
         Generates an LLM extraction message, optionally including few-shot examples.
         
@@ -62,13 +88,13 @@ class ERExtractor(Extractor):
         predicate_list_str = ", ".join(self._predicates)
 
         # Extract YAML sections
-        system_message = self.prompt_data["ER_EXTRACTION_PROMPT"]["SYTEM_MESSAGE"]
-        execution_protocol = self.prompt_data["ER_EXTRACTION_PROMPT"]["EXECUTION_PROTOCOL"]
-        output_requirements = self.prompt_data["ER_EXTRACTION_PROMPT"]["OUTPUT_REQUIREMENTS"]
-        constraints = self.prompt_data["ER_EXTRACTION_PROMPT"]["CONSTRAINTS"]
-        examples = self.prompt_data["ER_EXTRACTION_PROMPT"]["EXAMPLES"] if few_shot else ""
+        system_message = self._prompt_data["ER_EXTRACTION_PROMPT"]["SYTEM_MESSAGE"]
+        execution_protocol = self._prompt_data["ER_EXTRACTION_PROMPT"]["EXECUTION_PROTOCOL"]
+        output_requirements = self._prompt_data["ER_EXTRACTION_PROMPT"]["OUTPUT_REQUIREMENTS"]
+        constraints = self._prompt_data["ER_EXTRACTION_PROMPT"]["CONSTRAINTS"]
+        examples = self._prompt_data["ER_EXTRACTION_PROMPT"]["EXAMPLES"] if few_shot else ""
 
-        current_task = self.prompt_data["CURRENT_TASK"].format(entity_list_str=entity_list_str, predicates=predicate_list_str, text=text)
+        current_task = self._prompt_data["CURRENT_TASK"].format(entity_list_str=entity_list_str, predicates=predicate_list_str, text=text)
         # Construct user prompt dynamically
         user_prompt = f"""
         {execution_protocol}
@@ -85,6 +111,34 @@ class ERExtractor(Extractor):
 
         return extraction_message
     
+    def _conference_resolution_llm_message(self, text: str, few_shot: bool = True) -> List[Dict[str, str]]:
+        """
+        Generates an LLM conference resolution message, optionally including few-shot examples.
+        """
+        # Extract YAML sections
+        system_message = self._prompt_data["CONFERENCE_RESOLUTION_PROMPT"]["SYTEM_MESSAGE"]
+        execution_protocol = self._prompt_data["CONFERENCE_RESOLUTION_PROMPT"]["EXECUTION_PROTOCOL"]
+        output_requirements = self._prompt_data["CONFERENCE_RESOLUTION_PROMPT"]["OUTPUT_REQUIREMENTS"]
+        constraints = self._prompt_data["CONFERENCE_RESOLUTION_PROMPT"]["CONSTRAINTS"]
+        examples = self._prompt_data["CONFERENCE_RESOLUTION_PROMPT"]["EXAMPLES"] if few_shot else ""
+
+        current_task = self._prompt_data["CURRENT_TASK"].format(text=text)
+        # Construct user prompt dynamically
+        user_prompt = f"""
+        {execution_protocol}
+        {output_requirements}
+        {constraints}
+        {examples if few_shot else ""}
+        {current_task}
+        """
+
+        conference_resolution_message = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_prompt}
+        ]
+
+        return conference_resolution_message
+    
     def _extract_entities_and_relationships_from_given_content(self, text: str, num_responses=1) -> Dict[str, List[Dict]]:
         """
         Extract entities from the given text using the LLM.
@@ -92,10 +146,13 @@ class ERExtractor(Extractor):
         :param text: The input text for entity extraction.
         :return: A dictionary where keys are entity types and values are lists of extracted entities.
         """
-        extraction_message = self._extraction_llm_message(text)
+        conference_resolution_message = self._conference_resolution_llm_message(text)
+        raw_conference_resolution_text = self.conference_resolution_llm_model.chat(conference_resolution_message)
+        conference_resolution_text = self.conference_resolution_llm_model.get_response_texts(raw_conference_resolution_text)
         
-        raw_responses = self._llm.chat(extraction_message, num_responses=num_responses)
-        responses = self._llm.get_response_texts(raw_responses)
+        extraction_message = self._extraction_llm_message(conference_resolution_text)
+        raw_extraction_responses = self.extraction_llm_model.chat(extraction_message, num_responses=num_responses)
+        responses = self.extraction_llm_model.get_response_texts(raw_extraction_responses)
         responses_parts = [response.strip().split("\n\n") for response in responses]
 
         raw_extracted_entities: list = []

@@ -1,32 +1,25 @@
 from typing import List
 from collections import defaultdict
 
-from base_classes.graph_elements.knowledge_graph import KnowledgeGraph
 from base_classes.embedding_model import AbstractEmbeddingModel
-from base_classes.graph_elements.layer import KnowledgeGraphLayer
-from knowledge_graph.modules.node import EntityNode, ContentNode, HeadingNode, DocumentNode
+from knowledge_graph.modules.node import EntityNode, ContentNode
 from knowledge_graph.modules.relationship import HasEntityRelationship, BaseEntityRelationship
 from knowledge_graph.modules.entity.er_extractor import ERExtractor
 from exception.entity_exception import EntityDuplicationInOneContentNodeError, EntitiesAreDangerForMergingError
 from exception.embedding_exception import EmbeddingModelNotFoundError
 
-class EntityLayer(KnowledgeGraphLayer):
+class EntityLayer:
     er_extractor: ERExtractor = None
-    def __init__(self, graph: KnowledgeGraph) -> None:
-        super().__init__(graph)
+    def __init__(self) -> None:
+        self.graph = None
+        self.emb_model = None
 
     def load_er_extractor(self, er_extractor: ERExtractor) -> None:
         self._er_extractor = er_extractor
-        self._er_extractor.load_embedding_model(self.emb_model)
 
     # Getter methods
     def get_entity_nodes_by_content(self, content_node: ContentNode) -> List[EntityNode]:
         _entity_nodes = self.graph.get_entity_nodes_by_content(content_node)
-        entity_nodes = [EntityNode(**raw_entity_node) for raw_entity_node in _entity_nodes]
-        return entity_nodes
-    
-    def get_entity_nodes_by_heading(self, heading_node: HeadingNode) -> List[EntityNode]:
-        _entity_nodes = self.graph.get_entity_nodes_by_heading(heading_node)
         entity_nodes = [EntityNode(**raw_entity_node) for raw_entity_node in _entity_nodes]
         return entity_nodes
     

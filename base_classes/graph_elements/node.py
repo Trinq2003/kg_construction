@@ -1,8 +1,7 @@
 from datetime import datetime
-from py2neo import Node
 from typing import Any, Dict, Type, get_origin, get_args, List, Tuple, Set, Union
 
-class GraphNode(Node):
+class GraphNode:
     def __init__(self, label, defaults=None, **properties):
         defaults = defaults or {}
         combined_properties = self._apply_defaults_and_validate(defaults, properties)

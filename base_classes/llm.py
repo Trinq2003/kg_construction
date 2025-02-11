@@ -21,11 +21,14 @@ class AbstractLanguageModel(ABC):
 
         self.load_config(llm_config)
 
-        self.model_name: str = self._config.model_model_id
-        self.cache: bool = self._config.cache_enabled
+        self._model_name: str = self._config.model_model_id
+        self._temperature: float = self._config.model_temperature
+        self._max_tokens: int = self._config.model_max_tokens
+        self._cache: bool = self._config.cache_enabled
+        self._cache_expiry: int = self._config.cache_cache_expiry
 
-        if self.cache:
-            self.response_cache: Dict[str, List[Any]] = {}
+        if self._cache:
+            self._response_cache: Dict[str, List[Any]] = {}
 
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
@@ -54,7 +57,7 @@ class AbstractLanguageModel(ABC):
         """
         Clear the response cache.
         """
-        self.response_cache.clear()
+        self._response_cache.clear()
 
     def _increment_chat_count(self) -> None:
         """

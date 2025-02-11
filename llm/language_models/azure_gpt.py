@@ -30,9 +30,16 @@ class AzureGPT(AbstractLanguageModel):
 
         self.prompt_token_cost: float = self._config.cost_prompt_token_cost
         self.response_token_cost: float = self._config.cost_response_token_cost
-        self.temperature: float = self._config.model_temperature
-        self.max_tokens: int = self._config.model_max_tokens
+        
+        self.__max_retries: int = self._config.retry_max_retries
+        self.__backoff_factor: float = self._config.retry_backoff_factor
+        
+        self.encryption_enabled: bool = self._config.security_encrypted
+        self.trust_strategy: str = self._config.security_trust_strategy
+        
+        self._load_model()
 
+    def _load_model(self):
         if not self.__api_key:
             raise APIKeyIsNotSetError()
         if not self.__api_base:
@@ -54,8 +61,9 @@ class AzureGPT(AbstractLanguageModel):
         :return: Response(s) from the Azure OpenAI model.
         :rtype: Dict
         """
-        if self.cache and query in self.respone_cache:
-            return self.respone_cache[query]
+        # Check if the response is in the cache, if caching is enabled and the response is cached return the response without calling the model
+        if self._cache and query in self._response_cache:
+            return self._response_cache[query]
 
         if num_responses == 1:
             response = self.chat([
@@ -81,8 +89,8 @@ class AzureGPT(AbstractLanguageModel):
                     time.sleep(1)
                     total_num_attempts -= 1
 
-        if self.cache:
-            self.respone_cache[query] = response
+        if self._cache:
+            self._response_cache[query] = response
 
         return response
 
@@ -100,10 +108,10 @@ class AzureGPT(AbstractLanguageModel):
         :rtype: ChatCompletion
         """
         response = self.__llm.chat.completions.create(
-            model=self.model_name,
+            model=self._model_name,
             messages=messages,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            temperature=self._temperature,
+            max_tokens=self._max_tokens,
             n=num_responses,
         )
 

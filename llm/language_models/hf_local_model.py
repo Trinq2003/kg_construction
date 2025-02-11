@@ -30,9 +30,7 @@ class HuggingfaceLocalInference(AbstractLanguageModel):
         
         self._load_model()
         
-        
     def _load_model(self):
-
         if not self.__model_local_path or not self.__tokenizer_local_path:
             raise ValueError("Model path and tokenizer path must be specified in the configuration.")
 

@@ -8,7 +8,7 @@ class EmbeddingModelConfiguration(Configuration):
 
     def __init__(self):
         super().__init__()
-        self.sensitive_properties = [prop.replace('.', '_') for prop in self._get_sensitive_properties()]
+        self.sensitive_properties = []
 
     def _init_properties(self):
         """

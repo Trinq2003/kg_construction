@@ -10,6 +10,7 @@ class AbstractEmbeddingModel(ABC):
     Abstract base class that defines the interface for all embedding models.
     """
     _emb_moddel: Any = None
+    _config: EmbeddingModelConfiguration = None
     def __init__(
         self, embedding_model_config: EmbeddingModelConfiguration) -> None:
         """
@@ -23,12 +24,11 @@ class AbstractEmbeddingModel(ABC):
         :type cache: bool
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self._config: EmbeddingModelConfiguration = None
+        self.load_config(embedding_model_config)
         self._model_name: str = self._config.model_model_name
         self._max_tokens: int = self._config.model_max_tokens
         self._embedding_dims: int = self._config.model_embedding_dims
 
-        self.load_config(embedding_model_config)
         self._identical_threshold: float = self._config.model_identical_threshold
 
     @property

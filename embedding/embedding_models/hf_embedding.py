@@ -34,9 +34,9 @@ class HFLocalEmbeddingModel(AbstractEmbeddingModel):
 
         # Set the specific device (GPU or CPU)
         if "cuda" in self.__device and torch.cuda.is_available():
-            self.model = self.model.to(self.__device)
+            self._emb_model = self._emb_model.to(self.__device)
         elif self.__device == "cpu":
-            self.model = self.model.to(torch.device("cpu"))
+            self._emb_model = self._emb_model.to(torch.device("cpu"))
         else:
             raise ValueError(f"Unsupported device type or device not available: {self.__device}")
     
@@ -58,4 +58,4 @@ class HFLocalEmbeddingModel(AbstractEmbeddingModel):
         """
         emb_text1 = self.encode(text1)
         emb_text2 = self.encode(text2)
-        return self._emb_model.similarity(emb_text1, emb_text2)
+        return float(torch.nn.functional.cosine_similarity(torch.tensor(emb_text1), torch.tensor(emb_text2)).numpy())
